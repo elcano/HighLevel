@@ -22,32 +22,45 @@ public:
   Origin(double lat, double log);
 };
 
-class  Waypoint// best estimate of position and state
+
+// current estimate of position and state
 // used either for a Waypoint or a measured navigational fix
+class  Waypoint
+
 {
   public:
-    // Since the Arduino supports only 6 digits of precision in float/double,
+    // Since the Arduino supports only 6 digits of precision in float/double,           (actually 8 for Due, 10 for Mega, but for decimal points yes)
     // all latitudes and longitudes are recorded as integers.
-    // The (east_mm and north_mm) position carries more precision.
-		double latitude;
-		double longitude;
+
+    // The (east_mm and north_mm) position carries more precision.                      (why?)
+	double latitude;
+	double longitude;
+
+
     long east_mm;  	// x is east; max is 2147 km
     long north_mm;  // y is true north
+
+
     long sigma_mm = 3000; // standard deviation of position for GPS. 
+
     unsigned long time_ms;   // time of reading since start_time, start_date  
     // millis() + offset_ms = Waypoint.time_ms
-  /*
+  
+    
+    /*
   We represent points as locations in mm. A 32 bit signed long is good for +/- 2000 km.
   Latitudes and longitudes are given as a double with up to 9 digits,
   such as 47.622876, -122.352307
   On the Arduino, a float is the same as a double, giving 6 to 7 decimal digits.
   This means that mm resolution only applies within 1 km of the origin.
   */
-	long Evector_x1000;   // 1000 * unit vector pointing east
-  long Nvector_x1000;   // 1000 * unit vector pointing north
-  long bearing_deg;  // degrees. 0 = North; 90 = East.
-  long speed_mmPs; // vehicle speed in mm per second.
-  int index;       // used for passing a sequence of Waypoints over serial line.
+
+
+    long Evector_x1000;     // 1000 * unit vector pointing east
+    long Nvector_x1000;     // 1000 * unit vector pointing north
+    long bearing_deg;       // degrees. 0 = North; 90 = East.
+    long speed_mmPs;        // vehicle speed in mm per second.
+    int index;              // used for passing a sequence of Waypoints over serial line.
    
     void Compute_mm(Origin &origin);
     void Compute_LatLon(Origin &origin);
@@ -101,9 +114,9 @@ struct Junction
   // Where there are < 4 destinations, some pointers are NULL
   // If there are more than 4 destinations, one of the destinations has same location and
   // zero Distance.
-  long Distance[4];  // mm
-//  int Speed[4];     // mm / s
-//  curve *route[4];  // intermediate Waypoints between location and Destination.
+  long Distance[4];     // mm
+  //int Speed[4];       // mm / s
+  //curve *route[4];    // intermediate Waypoints between location and Destination.
   // location != route[n]->present
   // The vehicle does not pass though location if it is turning.  
   // The vehicle travels from (the last Waypoint of the curve leading into the junction)

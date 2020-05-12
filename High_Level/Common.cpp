@@ -1,10 +1,12 @@
-#include <IODue.h>
+#include "IODue.h"
 #include <Arduino.h>
 #include "Common.h"
 #include <math.h>
 
+//comment here for test
+
 //Globals from Common.cpp
-// global variables
+//global variables
 char buffer[BUFFSIZ];        // string buffer for the sentence
 char dataString[BUFFSIZ];
 volatile bool DataAvailable;
@@ -53,14 +55,14 @@ namespace elcano {
 		}
 		return d;
 	}
-//---------------------------------------------------------
-//  read a number of form  123.456,
-// On entry, str points to the 1 or -
-// On return, it points to the next charater beyond the comma.
-// whole number can have any number of digits.
-// fraction must be three digits.
-// If there is no decimal point, returned value is an integer.
-// If there is a decimal point, returned value is scaled.
+	//---------------------------------------------------------
+	//  read a number of form  123.456,
+	// On entry, str points to the 1 or -
+	// On return, it points to the next charater beyond the comma.
+	// whole number can have any number of digits.
+	// fraction must be three digits.
+	// If there is no decimal point, returned value is an integer.
+	// If there is a decimal point, returned value is scaled.
 
 	long int ReadDecimal(char *str) {
 		long whole;
@@ -111,7 +113,7 @@ namespace elcano {
 	}
 
 //---------------------------------------------------------
-// return true if a line was read; false if not
+//return true if a line was read; false if not
 	bool readline(int channel) {
 		// buffer can hold 128 bytes; if not enough there yet, try later.
 		const int MinimumMessage = 14;
@@ -167,6 +169,7 @@ namespace elcano {
 		}
 	}
 	/* Function Determines crosspoint on X-axis */
+	//currently only the X coordinate of the intersection between all points
 	double CrossPointX(double x1, double y1, double x2, double y2,
 										 double x3, double y3, double x4, double y4)
 	{
@@ -192,35 +195,40 @@ namespace elcano {
 	 */
 	void ComputePositionWithDR(Waypoint &oldData, Waypoint &newData)
 	{
-	//Serial.println("millis(): " + String(millis()));
-	//Serial.print("ComputePositionWithDR::NewTime:");
-	//Serial.print(newData.time_ms);
-	//Serial.print(",OldTime:");
-	//Serial.println(oldData.time_ms);
+								//Serial.println("millis(): " + String(millis()));
+								//Serial.print("ComputePositionWithDR::NewTime:");
+		//DEBUGGING				//Serial.print(newData.time_ms);
+								//Serial.print(",OldTime:");
+								//Serial.println(oldData.time_ms);
 	
 	
 	// To check if this is new reading or the same reading
 		if ( newData.time_ms > oldData.time_ms) {
 		
-			// Calculate distance
+			// Calculate distance using time-difference and speed of newData waypoint
 			double distance_mm = (newData.time_ms - oldData.time_ms) * (newData.speed_mmPs);
 		
-			//Serial.print("ComputePositionWithDR::newSpeed_mmPs:");
-			//Serial.print(newData.speed_mmPs);
-			//Serial.print(",distance:");
-			//Serial.println(newData.distance_mm);
+								//Serial.print("ComputePositionWithDR::newSpeed_mmPs:");
+		//DEBUGGING				//Serial.print(newData.speed_mmPs);
+								//Serial.print(",distance:");
+								//Serial.println(newData.distance_mm);
 		
-			newData.east_mm = oldData.east_mm + cos((newData.bearing_deg) * TO_RADIANS) * distance_mm;
+			//uses cosine to add horizontal distance to east							DO WE WANT EAST/NORTH? CAUSE THIS IMPLIES THERE IS A WEST/SOUTH... WHY NOT LAT/LONG?
+			newData.east_mm = oldData.east_mm + distance_mm * cos((newData.bearing_deg) * TO_RADIANS);
 		
-			newData.north_mm = oldData.north_mm + sin((newData.bearing_deg) * TO_RADIANS) * distance_mm;
+			//uses sine to add vertical distance to north
+			newData.north_mm = oldData.north_mm + distance_mm * sin((newData.bearing_deg) * TO_RADIANS);
 		
 		
-			//Serial.print("ComputePositionWithDR::X_pos:");
-			//Serial.print(newData.x_Pos);
-			//Serial.print(",Y_pos:");
-			//Serial.println(newData.y_Pos);
+								//Serial.print("ComputePositionWithDR::X_pos:");
+								//Serial.print(newData.x_Pos);
+		//DEBUGGING				//Serial.print(",Y_pos:");
+								//Serial.println(newData.y_Pos);
 		}
 	}
+
+
+
 	/* This function finds fuzzy crosspoint between GPS & Dead reckoning data
 	 Waypoint &gps -> GPS input
 	 Waypoint &dr   -> Dead reckoning input
@@ -228,6 +236,7 @@ namespace elcano {
 	 */
 	void FindFuzzyCrossPointXY(Waypoint &gps, Waypoint &dr, Waypoint &estimated_position)
 	{
+
 	//if GPS and DR position is the same
 	if (gps.east_mm == dr.east_mm && gps.north_mm == dr.north_mm)
 		{
@@ -236,70 +245,89 @@ namespace elcano {
 		return;
 		}
 	
+	//if the change between reckoning east and GPS-east is greater than the change between reckoning north and GPS-north
 	if (abs(gps.east_mm - dr.east_mm) > abs(gps.north_mm - dr.north_mm))
-		{  // more change in east
-			//Serial.println("more east");
-			if (gps.east_mm >= dr.east_mm)
-				{  // cross point is intersection of line down from DR and line up to GPS
-					// DR down line is from (dr->east_mm, 1) to (dr->east_mm + DR_ERROR_mm, 0)
-					// line up to GPS is from (gps->east_mm - gps->sigma_mm, 0) to (gps->east_mm, 1)
-					estimated_position.east_mm = CrossPointX(dr.east_mm,1, dr.east_mm + DR_ERROR_mm, 0,
-																										gps.east_mm - gps.sigma_mm, 0., gps.east_mm, 1);
-				}
-			else
-				{  // cross point is intersection of line down from GPS and line up to DR
-					estimated_position.east_mm = CrossPointX(dr.east_mm - DR_ERROR_mm,0., dr.east_mm, 1,
-																										gps.east_mm, 1,gps.east_mm + gps.sigma_mm, 0.);
-				}
-			// north position is proportional to east position
-			if (gps.north_mm >= dr.north_mm)
-				{
-				estimated_position.north_mm = dr.north_mm + (gps.north_mm - dr.north_mm) *
-				abs((gps.east_mm-estimated_position.east_mm)/(double)(gps.east_mm - dr.east_mm));
-				}
-				else
-					{
-					estimated_position.north_mm = gps.north_mm + (dr.north_mm - gps.north_mm) *
-					abs((gps.east_mm-estimated_position.east_mm)/(double)(gps.east_mm - dr.east_mm));
-					}
+	{  
+
+
+						//DEBUGGING									//Serial.println("more east");
+
+		//if the gps-east is further east than reckoning-east
+		if (gps.east_mm >= dr.east_mm)
+		{  
+			// cross point is intersection of line down from DR and line up to GPS
+			// DR down line is from (dr->east_mm, 1) to (dr->east_mm + DR_ERROR_mm, 0)
+			// line up to GPS is from (gps->east_mm - gps->sigma_mm, 0) to (gps->east_mm, 1)
+			estimated_position.east_mm = CrossPointX(dr.east_mm,1, dr.east_mm + DR_ERROR_mm, 0,
+																gps.east_mm - gps.sigma_mm, 0., gps.east_mm, 1);
 		}
-	else
-		{  // more change in north
-			// TO DO: similar to above, but swap east and north
-			//Serial.println("more north");
-			if(gps.north_mm >= dr.north_mm)
-				{
-				// cross point is intersection of line down from DR and line up to GPS
-				// DR down line is from (1, dr->north_mm) to (0, dr->north_mm + DR_ERROR_mm)
-				// line up to GPS is from (0, gps->north_mm - gps->sigma_mm) to (1, gps->north_mm)
-				estimated_position.north_mm = CrossPointX(dr.north_mm,1, dr.north_mm + DR_ERROR_mm, 0,
-																								 gps.north_mm - gps.sigma_mm, 0., gps.north_mm, 1);
-				}
-			else
-				{	// cross point is intersection of line down from GPS and line up to DR
-					estimated_position.north_mm = CrossPointX(dr.north_mm - DR_ERROR_mm,0., dr.north_mm, 1,
-																									 gps.north_mm, 1,gps.north_mm + gps.sigma_mm, 0.);
-				}
-			// east position is proportional to north position
-			if (gps.east_mm >= dr.east_mm)
-				{
-				estimated_position.east_mm = dr.east_mm + (gps.east_mm - dr.east_mm) *
-				abs((gps.north_mm-estimated_position.north_mm)/(double)(gps.north_mm - dr.north_mm));
-				}
-				else
-					{
-					estimated_position.east_mm = gps.east_mm + (dr.east_mm - gps.east_mm) *
-					abs((gps.north_mm-estimated_position.north_mm)/(double)(gps.north_mm - dr.north_mm));
-					}
+
+		//otherwise the reckoning-east is further east than the GPS
+		else
+		{  
+			// cross point is intersection of line down from GPS and line up to DR
+			estimated_position.east_mm = CrossPointX(dr.east_mm - DR_ERROR_mm, 0., dr.east_mm, 1,
+																gps.east_mm, 1,gps.east_mm + gps.sigma_mm, 0.);
+		}
+
+		// north position is proportional to east position												WHY IS IT PROPORTIONAL??
+		if (gps.north_mm >= dr.north_mm)
+		{
+																									//WHERE DO THESE EQUATIONS COME FROM?
+			estimated_position.north_mm = dr.north_mm + (gps.north_mm - dr.north_mm) *
+						abs((gps.east_mm-estimated_position.east_mm)/(double)(gps.east_mm - dr.east_mm));
+		}
+		else
+		{
+			estimated_position.north_mm = gps.north_mm + (dr.north_mm - gps.north_mm) *
+					abs((gps.east_mm-estimated_position.east_mm)/(double)(gps.east_mm - dr.east_mm));
 		}
 	}
 
-//Constructor for type Origin object
+	//then the difference between north's is greater than the differences between south's
+	else
+		{  
+			// TO DO: similar to above, but swap east and north
+			//Serial.println("more north");
+			if(gps.north_mm >= dr.north_mm)
+			{
+			// cross point is intersection of line down from DR and line up to GPS
+			// DR down line is from (1, dr->north_mm) to (0, dr->north_mm + DR_ERROR_mm)
+			// line up to GPS is from (0, gps->north_mm - gps->sigma_mm) to (1, gps->north_mm)
+			estimated_position.north_mm = CrossPointX(dr.north_mm,1, dr.north_mm + DR_ERROR_mm, 0,
+																	gps.north_mm - gps.sigma_mm, 0., gps.north_mm, 1);
+			}
+
+			//then the reckoning-north is bigger than GPS-north
+			else
+			{	// cross point is intersection of line down from GPS and line up to DR
+				estimated_position.north_mm = CrossPointX(dr.north_mm - DR_ERROR_mm,0., dr.north_mm, 1,
+																									gps.north_mm, 1,gps.north_mm + gps.sigma_mm, 0.);
+			}
+
+
+			// east position is proportional to north position
+			if (gps.east_mm >= dr.east_mm)
+			{														//WHERE DO THESE EQUATIONS COME FROM
+				estimated_position.east_mm = dr.east_mm + (gps.east_mm - dr.east_mm) *
+					abs((gps.north_mm-estimated_position.north_mm)/(double)(gps.north_mm - dr.north_mm));
+			}
+			else
+			{
+				estimated_position.east_mm = gps.east_mm + (dr.east_mm - gps.east_mm) *
+					abs((gps.north_mm-estimated_position.north_mm)/(double)(gps.north_mm - dr.north_mm));
+			}
+		}
+	}
+
+	//Constructor for type Origin object
 	Origin::Origin(double lat, double log) {
 		latitude = lat;
 		longitude = log;
 
-		cos_lat = cos((latitude) * TO_RADIANS);
+		cos_lat = cos((latitude) * TO_RADIANS);					//the way they've done this, this is the distance along the earth's radius towards the equator
+																//until they reach where the actual latitude is, if projected downwards onto the radius towards the equator
+																//doesn't make sense.... they mixed up where the hypotenuse was
 	}
 	
 	void Waypoint::SetTime(char *pTime, char * pDate) {
@@ -319,23 +347,26 @@ namespace elcano {
 		strncpy(StartTime + 18,  pTime + 7, 3); // millisecond
 	}
 
-/* There are more accurate ways to compute distance between two latitude and longitude points.
-   We use a simple approximation, since we are interesed in a flat projection over a small area.
-   Curvature of the earth is not significant.
-*/
+
+
+	/* There are more accurate ways to compute distance between two latitude and longitude points.
+	   We use a simple approximation, since we are interesed in a flat projection over a small area.
+	   Curvature of the earth is not significant.
+	*/
 	void Waypoint::Compute_mm(Origin &origin) {
-		// compute relative to origin, since Arduino double is limited to 6 digits.
+		// compute relative to origin, since Arduino double is limited to 6 digits.						WHY THE ORIGIN? DO WE WANT ANOTHER STARTING POINT INSTEAD?
 		double diffWhole;
 		double dist;
 
-    diffWhole = latitude - origin.latitude;
-    dist = diffWhole * TO_RADIANS * EARTH_RADIUS_MM;
-    north_mm = dist;
+		diffWhole = latitude - origin.latitude;
+		dist = diffWhole * TO_RADIANS * EARTH_RADIUS_MM;								//IF A FLAT PROJECTION, WHY BOTHER WITH RADIANS/CURVATURE TO FIND DISTANCE?
+		north_mm = dist;																//SHOULD JUST BE A SIMPLE ARITHMETIC, UNLESS CURVATURE IS INVOLVED
 
-		diffWhole = (longitude - origin.longitude);
-		dist = (diffWhole * TO_RADIANS * EARTH_RADIUS_MM);
-		east_mm = (dist * origin.cos_lat);
-
+		diffWhole = (longitude - origin.longitude);										//IF A FLAT PROJECTION, WHY BOTHER WITH RADIANS/CURVATURE TO FIND DISTANCE?
+		dist = diffWhole * TO_RADIANS * EARTH_RADIUS_MM;								//SHOULD JUST BE A SIMPLE ARITHMETIC, UNLESS CURVATURE IS INVOLVED
+		east_mm = (dist * origin.cos_lat);					//as described above in origin, this will be wrong
+															//should mimic like latitude above, i believe that is correct... if you want to account for curvature
+															//which we shouldn't be having to do? due to local scale
 		
 	}
 
@@ -349,9 +380,10 @@ namespace elcano {
 		theta = asin((double)(east_mm/origin.cos_lat) / EARTH_RADIUS_MM);
 		longitude = origin.longitude + (theta / TO_RADIANS);
 	}
-//---------------------------------------------------------
+
+
 /*
-   Estimated state (index=-1)  or Waypoint, or list of next Waypoints on route (index > 0);
+   Estimated state (index=-1)  or Waypoint, or list of next Waypoints on route (index > 0);									WHAT IS THIS
 	  $POINT,<east_m>,<north_m>,<sigma_m>,<time_s>,<speed_mPs>,<Evector_x1000>,<Nvector_x1000>,<index>*CKSUM
 	  // at leat 18 characters
 */

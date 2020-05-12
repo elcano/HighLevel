@@ -18,9 +18,11 @@ Waypoint estimated_position, old_position;
  * main setup method
  *****************************************************************************************************/
 void setup() {
-   if(DEBUG)Serial.println("origin is first set to :" + String(origin.latitude) + " " + String(origin.longitude));
  
    Serial.begin(9600);
+   
+   if(DEBUG)Serial.println("origin is first set to :" + String(origin.latitude) + " " + String(origin.longitude));
+
   //re-include if use serial again for raspberrypi or else
   //Serial2.begin(9600);
   if (CAN.begin(CAN_BPS_500K)) { // initalize CAN with 500kbps baud rate 

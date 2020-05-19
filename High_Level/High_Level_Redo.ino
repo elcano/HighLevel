@@ -21,7 +21,7 @@ void setup() {
  
    Serial.begin(9600);
    
-   if(DEBUG)Serial.println("origin is first set to :" + String(origin.latitude) + " " + String(origin.longitude));
+  if(DEBUG)Serial.println("origin is first set to :" + String(origin.latitude) + " " + String(origin.longitude));
 
   //re-include if use serial again for raspberrypi or else
   //Serial2.begin(9600);

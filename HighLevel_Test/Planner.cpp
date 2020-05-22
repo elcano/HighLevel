@@ -203,7 +203,7 @@ void Planner::SelectMap(Origin &orgin, Waypoint &startLocation, char* fileName, 
       if(DEBUG)Serial.println(startLocation.longitude, 6);
 			for (int i = 0; i < numMaps; i++) {
         double dist = startLocation.distance_points_mm(map_latitudes[i], map_longitudes[i]);
-        if(DEBUG)Serial.println("Distance for index " + String(i) + " is " + String(dist));
+        if(DEBUG)Serial.println("Distance for index " + String(i) + " is " + String(dist/1000000)) + " km";
 				if (dist < closestDistance) {
 					closestIndex = i;
 					closestDistance = dist;

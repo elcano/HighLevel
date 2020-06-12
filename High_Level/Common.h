@@ -15,7 +15,7 @@ public:
 	double longitude;
   float cos_lat;
   
-  Origin(){} //Defualt constructor
+  Origin(); //Defualt constructor
     
   //constructor for hardcoding Origin in global scope
   //cos_lat will be initialized depending on latDeg and latMin

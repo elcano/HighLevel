@@ -8,15 +8,17 @@
 
 //#include "stdafx.h"  // required for MSVC. Remove for Arduino.
 
-// #include "Matrix.h"
+#include "Matrix.h"
 #include "Kalman.h"
+#define SNAFU
+#ifndef SNAFU
 /*
 Kalman filter
 Matrix x state: longs for position_mm_east, position_mm_north,
   velocity_mm_s_east, velocity_mm_s_north
 */
-#define NSTATES 7
-#define NSEEN 7
+#define NSTATES (7)
+#define NSEEN (7)
 void Filter(REAL* State, // e.g  x, y position, x, y velocity
             REAL* uncertainty,   // P uncertainty covariance
             REAL* measurements, // Z: measured x and y position in mm
@@ -40,7 +42,13 @@ void Filter(REAL* State, // e.g  x, y position, x, y velocity
       REAL observable[NSEEN*NSTATES]; // = {1., 0, 0, 0,
                    //        0, 1., 0, 0};
       // only position is measurable; not velocity
-      matrix x = matrix(NSTATES,1,State); // initial state (location and velocity)
+
+      /*-----------------------------------------------------------------------------
+      // Compiler is confused; it thinks there is just one argument of type matrix TCF 6/11/20
+      // Polymorphism seems to be a C++ featurs not well supported by the Arduino dialect.
+      // Aduino code needs to be rewriiten with C style mechanisms.
+      ------------------------------------------------------------------------------*/
+      matrix x = matrix( NSTATES, 1, State); // initial state (location and velocity)
       matrix P = matrix(NSTATES,NSTATES, uncertainty); // 4x4 initial uncertainty
       matrix meas = matrix(NSEEN,1,measurements);
  
@@ -86,7 +94,7 @@ void Filter(REAL* State, // e.g  x, y position, x, y velocity
 	matrix x_Ky = x + Ky;
         x = x_Ky;
 	matrix KH = K*H;
-	matrix IKH = I-(KH);
+	matrix IKH = I - KH;
 	matrix Pnew = IKH * P; // (I-(K*H)) * P;  
         P = Pnew;
         Show("R= ");
@@ -102,3 +110,4 @@ void Filter(REAL* State, // e.g  x, y position, x, y velocity
         P.values(uncertainty);
 	return;
 }
+#endif // SNAFU

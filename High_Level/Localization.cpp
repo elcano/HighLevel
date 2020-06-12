@@ -1,11 +1,13 @@
 #include "Localization.h"
 
 #define mySerial Serial3
+
 Adafruit_GPS GPS(&mySerial);
+
 //Adafruit_L3GD20 gyro; GYRO still not working
 //#ifdef USE_I2C
   // The default constructor uses I2C
-  Adafruit_L3GD20_Unified gyro;
+  //Adafruit_L3GD20_Unified gyro = Adafruit_L3GD20_Unified(1337);
 //#else
   // To use SPI, you have to define the pins
  // #define GYRO_CS 4 // labeled CS
@@ -29,7 +31,7 @@ Localization::Localization(Origin &org, Waypoint &estimated_position, Waypoint &
   mag.enableAutoRange(true);
   accel.enableAutoRange(true);
   
-  if(!accel.begin())
+   if(!accel.begin())
   {
     /* There was a problem detecting the ADXL345 ... check your connections */
     if(DEBUG) Serial.println("Ooops, no accelerometer detected ... Check your wiring!");
@@ -37,13 +39,14 @@ Localization::Localization(Origin &org, Waypoint &estimated_position, Waypoint &
   if (!mag.begin()) {
     if(DEBUG)  Serial.println("no magnetometer detected ... Check your wiring!");
   }
-  mag.begin();
-  accel.begin();
+  //mag.begin();
+  //accel.begin();
   
   initial_position(org, estimated_position,oldPos); //getting your initial position from GPS comment out if no GPS available
   //set starting speed to 0 
   newPos.speed_mmPs = 0;
-  
+
+  /*
   // Try to initialise and warn if we couldn't detect the chip
    if (!gyro.begin(GYRO_RANGE_250DPS))
   //if (!gyro.begin(gyro.L3DS20_RANGE_500DPS))
@@ -51,6 +54,7 @@ Localization::Localization(Origin &org, Waypoint &estimated_position, Waypoint &
   {
     if(DEBUG) Serial.println("Oops ... unable to initialize the gyro. Check your wiring!");
   }
+  */
 }
 
 /********************************************************************************************************
@@ -61,10 +65,14 @@ void Localization::setup_GPS() {
   //Serial 3 (mySerial) is used for GPS
   mySerial.begin(GPSRATE);
   // Serial3.begin(GPSRATE);
-  GPS.begin(GPSRATE);
+  if(!GPS.begin(GPSRATE))
+  {
+    if(DEBUG) Serial.println("Ooops, no GPS detected ... Check your wiring!");
+  }
 
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
   //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+
   // uncomment this line to turn on only the "minimum recommended" data
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
   // For parsing data, we don't suggest using anything but either RMC only or RMC+GGA since
@@ -162,6 +170,17 @@ long Localization::getHeading() {
   //Calculate the current heading (angle of the vector y,x)
   //Normalize the heading
   float heading = (atan2(event.magnetic.y, event.magnetic.x) * 180) / PIf;
+  
+  if(DEBUG){
+  Serial.println("mag y = " + String(event.magnetic.y));
+  Serial.println("mag x = " + String(event.magnetic.x));
+  Serial.println("mag z = " + String(event.magnetic.z));
+  
+  Serial.println("raw y = " + String(mag.raw.y));
+  Serial.println("raw x = " + String(mag.raw.x));
+  Serial.println("raw z = " + String(mag.raw.z));
+  }
+  
   if(DEBUG)  Serial.println("acquired heading: " + String(heading));
   if (heading < 0)  {
     heading = 360 + heading;
@@ -169,37 +188,37 @@ long Localization::getHeading() {
   if(DEBUG3) Serial.println("Heading is: " + String(heading));
   return heading;
 }
-
-/*******************************************************************************************************
- * getGyroRoll()
- * uses gyroscope to get Gyroscope roll
- ******************************************************************************************************/
- double Localization::getGyroRoll(){
-    sensors_event_t event;
-    gyro.getEvent(&event);
-  if(DEBUG) Serial.println("Gyroscope Roll X: " + String(event.gyro.x));
-  return event.gyro.x;
- }
- /*******************************************************************************************************
- * getGyroPitch()
- * uses gyroscope to get GyroPitch
- ******************************************************************************************************/
- double Localization::getGyroPitch(){
-    sensors_event_t event;
-    gyro.getEvent(&event);
-  if(DEBUG) Serial.println("Gyroscope Pitch Y: " + String(event.gyro.y)); 
-  return event.gyro.y;
-}
- /*******************************************************************************************************
- * getGyroYaw()
- * uses gyroscope to get GyroYaw
- ******************************************************************************************************/
- double Localization::getGyroYaw(){
-  sensors_event_t event; 
-  gyro.getEvent(&event);
-  if(DEBUG) Serial.println("Gyroscope Yaw Z: " + String(event.gyro.z)); 
-  return event.gyro.z;
-  }
+//
+///*******************************************************************************************************
+// * getGyroRoll()
+// * uses gyroscope to get Gyroscope roll
+// ******************************************************************************************************/
+// double Localization::getGyroRoll(){
+//    sensors_event_t event;
+//    gyro.getEvent(&event);
+//  if(DEBUG) Serial.println("Gyroscope Roll X: " + String(event.gyro.x));
+//  return event.gyro.x;
+// }
+// /*******************************************************************************************************
+// * getGyroPitch()
+// * uses gyroscope to get GyroPitch
+// ******************************************************************************************************/
+// double Localization::getGyroPitch(){
+//    sensors_event_t event;
+//    gyro.getEvent(&event);
+//  if(DEBUG) Serial.println("Gyroscope Pitch Y: " + String(event.gyro.y)); 
+//  return event.gyro.y;
+//}
+// /*******************************************************************************************************
+// * getGyroYaw()
+// * uses gyroscope to get GyroYaw
+// ******************************************************************************************************/
+// double Localization::getGyroYaw(){
+//  sensors_event_t event; 
+//  gyro.getEvent(&event);
+//  if(DEBUG) Serial.println("Gyroscope Yaw Z: " + String(event.gyro.z)); 
+//  return event.gyro.z;
+//  }
   
  /*******************************************************************************************************
  * getAccelX()
@@ -268,10 +287,10 @@ void Localization::findPosition(Waypoint &estimPos, bool got_GPS, Waypoint &oldP
   double accelX = getAccelX();
   double accelY = getAccelY();
   double accelZ = getAccelZ();
-  double gyroRoll = getGyroRoll();
-  double gyroPitch = getGyroPitch();
-  double gyroYaw = getGyroYaw();
-  
+//  double gyroRoll = getGyroRoll();
+//  double gyroPitch = getGyroPitch();
+//  double gyroYaw = getGyroYaw();
+//  
   if (got_GPS) { 
     if(DEBUG)  Serial.println("got gps and deadreckoning");
     

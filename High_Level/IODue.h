@@ -58,7 +58,7 @@
 #define DIRECTION_OUT 9    //-----> Not used
 
 // Pins setup for  Adafruit Micro-SD (4/20/18)
-const int chipSelect = 10;  // used in C6 setup and void initialize
+const int chipSelect = 35;  // used in C6 setup and void initialize
 #define CARD_DETECT 36   //-----> Not used
 #define CS_SD 35         //-----> Not used
 /** DI - MOSI

@@ -5,7 +5,8 @@
 //   C++ version by Tyler Folsom; March 6, 2012.
 
 //#include "stdafx.h"  // required for MSVC. Remove for Arduino.
-
+#define SNAFU
+#ifndef SNAFU
 #include <math.h>
 #include "Matrix.h"
 #ifndef Abs
@@ -44,7 +45,9 @@ matrix::matrix(matrix& Value) // constructor from a matix
 {
 	rows = Value.rows;
 	columns = Value.columns;
+#ifndef ARDUINO
 	value = new REAL[rows * columns];
+#endif
 	for (int i = 0; i < rows * columns; i++)
 	{
 		value[i] = Value.value[i];
@@ -345,4 +348,4 @@ matrix matrix::operator/(matrix& right)
 		return aux;
 	return __mul__(aux);
 }
-
+#endif // SNAFU

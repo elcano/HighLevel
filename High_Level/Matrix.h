@@ -3,9 +3,10 @@
 //   From Udacity CS 373 Artificial Intelliegence for Robots.
 //   Taught by Sebastian Thrun.
 //   C++ version by Tyler Folsom; March 6, 2012.
-
+#ifndef MATRIX_H
+#define MATRIX_H
 #define TOLERANCE (1.0e-5)
-//#define ARDUINO 1
+// #define ARDUINO 1  // enabled by default
 #define MAX_MATRIX_SIZE 36
 #define REAL float
 
@@ -31,16 +32,15 @@ private:
 	REAL* operator[](int i);
 	REAL element(int i, int k);
 public:
-	matrix(int Rows, int Columns); // zero constructor
+  matrix(matrix& value); // constructor from a matrix
 	matrix(int dim); // identity constructor
 	matrix(int Rows, int Columns, REAL* values); // contruct from list of values
-	matrix(matrix& value); // constructor from a matrix
+  matrix(int Rows, int Columns); // zero constructor
 	~matrix()
 	{
 #ifndef ARDUINO
 		delete[] value;
 #endif
-
 	}
 	void show();
 	matrix inverse();
@@ -57,4 +57,4 @@ public:
 	matrix CholeskyInverse();
 	void values(REAL* dest);
 };
-
+#endif

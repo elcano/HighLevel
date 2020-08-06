@@ -51,9 +51,7 @@ namespace elcano {
 		latitude = lat;
 		longitude = log;
 
-		cos_lat = cos((latitude) * TO_RADIANS);					//the way they've done this, this is the distance along the earth's radius towards the equator
-																//until they reach where the actual latitude is, if projected downwards onto the radius towards the equator
-																//doesn't make sense.... they mixed up where the hypotenuse was
+		cos_lat = cos((latitude) * TO_RADIANS);	// needed to correct for the size of a degree of longitude.
 	}
 
 /*---------------------------------------------------------------------------------------*/
@@ -227,13 +225,16 @@ namespace elcano {
 		//DEBUGGING				//Serial.print(newData.speed_mmPs);
 								//Serial.print(",distance:");
 								//Serial.println(newData.distance_mm);
-		
-			//uses cosine to add horizontal distance to east							DO WE WANT EAST/NORTH? CAUSE THIS IMPLIES THERE IS A WEST/SOUTH... WHY NOT LAT/LONG?
+
+// Latitude and longitude cannot be used for distance computations since the distance represented 
+// by one degree is not the same for them.
+			//uses cosine to add horizontal distance to east
 			newData.east_mm = oldData.east_mm + distance_mm * cos((newData.bearing_deg) * TO_RADIANS);
+      // a negative east_mm means west
 		
 			//uses sine to add vertical distance to north
 			newData.north_mm = oldData.north_mm + distance_mm * sin((newData.bearing_deg) * TO_RADIANS);
-		
+		 // a negative north_mm means south.
 		
 								//Serial.print("ComputePositionWithDR::X_pos:");
 								//Serial.print(newData.x_Pos);
@@ -353,27 +354,43 @@ namespace elcano {
 		strncpy(StartTime + 18,  pTime + 7, 3); // millisecond
 	}
 
-
-
 	/* There are more accurate ways to compute distance between two latitude and longitude points.
 	   We use a simple approximation, since we are interesed in a flat projection over a small area.
 	   Curvature of the earth is not significant.
 	*/
+/*----------------------------------------------------------------------------------------
+ *  Given a latitude and longitude, compute its coordinates on the current map as
+ *  (east_mm, north_mm).
+ *  This position depends on the latitude and longitude of the map origin.
+ *  Thus the argument to the function is the origin of the current map.
+ *  
+ *  double and float on Arduino Uno, Mega and Micro are both 32 bits, with only
+ *  24 bits for the mantissa. Thus an Arduino doouble is not capable of enough resolution.
+ *  The 7th digit after the decimal point in latitude or longitude corresponds to about 1 cm.
+ *  To get 1 cm resolution in longitude would require 3 digits for the whole number and 7
+ *  digits after the decimal point or 10^-10.
+ *  But 24 binary digits correspond to 6 * 10^-8 which is not precise resolution.
+ *  Double on Arduino Due is 64 bits, so it would have adequate resolution
+ *  Thus distances are kept as 32-bit integers in mm.
+ */----------------------------------------------------------------------------------------
+  
 	void Waypoint::Compute_mm(Origin &origin) {
-		// compute relative to origin, since Arduino double is limited to 6 digits.						WHY THE ORIGIN? DO WE WANT ANOTHER STARTING POINT INSTEAD?
+		// compute relative to origin, since Arduino double is limited to 6 digits.	
 		double diffWhole;
 		double dist;
-
-		diffWhole = latitude - origin.latitude;
-		dist = diffWhole * TO_RADIANS * EARTH_RADIUS_MM;								//IF A FLAT PROJECTION, WHY BOTHER WITH RADIANS/CURVATURE TO FIND DISTANCE?
-		north_mm = dist;																//SHOULD JUST BE A SIMPLE ARITHMETIC, UNLESS CURVATURE IS INVOLVED
-
-		diffWhole = (longitude - origin.longitude);										//IF A FLAT PROJECTION, WHY BOTHER WITH RADIANS/CURVATURE TO FIND DISTANCE?
-		dist = diffWhole * TO_RADIANS * EARTH_RADIUS_MM;								//SHOULD JUST BE A SIMPLE ARITHMETIC, UNLESS CURVATURE IS INVOLVED
-		east_mm = (dist * origin.cos_lat);					//as described above in origin, this will be wrong
-															//should mimic like latitude above, i believe that is correct... if you want to account for curvature
-															//which we shouldn't be having to do? due to local scale
-		
+/*
+ * One degree of latitude is 111 km anywhere on the globe.
+ */
+		diffWhole = latitude - origin.latitude;   // In degrees
+		dist = diffWhole * TO_RADIANS * EARTH_RADIUS_MM;		// In mm as double
+		north_mm = dist;   // In mm as 32-bit int
+/*
+ * One degree of longitude is 111 km at the equator and zero at the poles. 
+ * The distance represented by a degree of longitude depends on the latitude.
+ */
+		diffWhole = (longitude - origin.longitude);	 // In degrees
+		dist = diffWhole * TO_RADIANS * EARTH_RADIUS_MM;		// In mm as double
+		east_mm = (dist * origin.cos_lat);					// account for variation in longitude distance
 	}
 
 

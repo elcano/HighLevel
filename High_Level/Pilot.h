@@ -1,7 +1,7 @@
 #pragma once
 #include "Common.h"
 #include "Planner.h"
-#ifndef SIMULATION
+#ifdef USING_ARDUINO
 #include <due_can.h>
 #endif
 
@@ -19,7 +19,7 @@ private:
    long turn_direction;
    long pre_desired_speed;
    long pre_turn_angle;
-#ifndef SIMULATION
+#ifdef USING_ARDUINO
    CAN_FRAME CANoutput; //CAN frame to carry message to DBW
 #endif
 

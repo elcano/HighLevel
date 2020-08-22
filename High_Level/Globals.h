@@ -3,7 +3,10 @@
 #pragma once
 
 namespace elcano {
-//#define SIMULATION true //  Defined only if code is not run on an  Arduino
+// Defined if code controls a virtual vehicle.
+#define USING_CARLA
+//  Defined only if code is run on an  Arduino
+#define USING_ARDUINO true
 
 //undefine to stop debug Serial.print/ln printing
 //#define DEBUG false  //general debugging entering methods, passing tests etc
@@ -11,10 +14,8 @@ namespace elcano {
 //#define DEBUG3 false //Navigation and Pilot debuggging, which direction told to travel
 //#define DEBUG4 false //for testing propper heading of first path in Pilot.cpp
 
-
 #define CONES                        6  //number of mission points. Update this for each use in new area
 #define MAX_WAYPOINTS                50 //change if you map with more than 50 points
-
 
 #define MAX_CAN_FRAME_DATA_LEN_16    16
 #define TURN_RADIUS_MM               1000
@@ -54,11 +55,16 @@ const long turn_speed = 835;
 
 const int chipSelect_SD = 35;  // Pin number; used in Location setup and initialize
 
+
+#ifdef USING_CARLA
+// origin set for CARLA
+#define ORIGIN_LAT     49
+#define ORIGIN_LONG     8
+#else
 //origin set to center of UWB soccer field
-#ifndef ORIGIN_LAT
-#define ORIGIN_LAT 47.76085
+#define ORIGIN_LAT       47.76085
 #define ORIGIN_LONG    -122.190044
-#define DEFAULT_GPS_ERROR_MM 3000
 #endif
+#define DEFAULT_GPS_ERROR_MM 3000
 }//end namespace elcano
 #endif // _GLOBALS_H_

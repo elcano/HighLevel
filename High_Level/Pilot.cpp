@@ -24,7 +24,7 @@ Pilot::Pilot(Position vehiclePosition)
    next       = 1;
    speed_mmPs = 0;  // Not moving
 
-#ifndef SIMULATION
+#ifdef USING_ARDUINO
    //CAN FRAME initialization
    CANoutput.length = MAX_CAN_FRAME_DATA_LEN_16;
    CANoutput.id     = HiDrive_CANID; //Drive instructions from hilevel board
@@ -399,7 +399,7 @@ void Pilot::hardCoded_Pilot_Test()
 void Pilot::Pilot_communicate_LowLevel()
 {
    //if (pre_desired_speed != speed_mmPs || pre_turn_angle != turn_direction) {  send every time, lowlevel only reacts when not close
-#ifndef SIMULATION
+#ifdef USING_ARDUINO
    CANoutput.data.low  = speed_mmPs;
    CANoutput.data.high = turn_direction;
    CAN.sendFrame(CANoutput);  //send the message

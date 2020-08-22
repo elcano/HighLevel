@@ -414,8 +414,8 @@ void Location::initial_position()
    else   // No GPS
    // With no GPS a default GPS_reading is (47.760850, -122.190044); //center of UW soccer field
    {
-      GPS_reading.latitude  = 47.760850;
-      GPS_reading.longitude = -122.190044;
+      GPS_reading.latitude  = ORIGIN_LAT;
+      GPS_reading.longitude = ORIGIN_LONG;
       GPS_reading.cos_lat   = cos(GPS_reading.latitude * TO_RADIANS);
    }
    newPos.latitude  = GPS_reading.latitude;

@@ -4,7 +4,7 @@
 #include "Pilot.h"
 #include "Localization.h"
 //Outside libraries
-#ifndef SIMULATION
+#ifdef USING_ARDUINO
 #include <Adafruit_L3GD20.h>
 #endif
 using namespace elcano;

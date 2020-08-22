@@ -1,5 +1,5 @@
 #include "Globals.h"
-#ifndef SIMULATION
+#ifdef USING_ARDUINO
 #include <Arduino.h>
 #endif
 #include "Common.h"

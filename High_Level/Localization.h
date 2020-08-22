@@ -1,6 +1,6 @@
 
 #pragma once
-#ifndef SIMULATION
+#ifdef USING_ARDUINO
 #include <due_can.h>
 #include <Adafruit_GPS.h>
 #include <Adafruit_Sensor.h>
@@ -19,7 +19,7 @@ private:
    long actualSpeed = 0; // Speed will come from Drive-by-wire.
 
    bool got_GPS = false;
-#ifndef SIMULATION
+#ifdef USING_ARDUINO
    /* Assign a unique ID to this sensor at the same time */
    Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
 
